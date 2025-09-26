@@ -1,1 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drift for Flutter Cheatsheet</title>
+    <!-- Google Fonts: Inter for body, JetBrains Mono for code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <!-- Prism.js for syntax highlighting (Default Light Theme) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            /* Default Light Theme Palette */
+            --bg-color: #ffffff;
+            --surface-color: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-color: #212529;
+            
+            --header-color: #0056b3;
+            --accent-color: #6f42c1;
+            
+            --button-bg: #6c757d;
+            --button-hover-bg: #5a6268;
+            --button-copied-bg: #28a745;
+            
+            --navbar-height: 60px;
+        }
 
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: calc(var(--navbar-height) + 1rem);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.7;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding-top: var(--navbar-height);
+        }
+        
+        /* === Sticky Navbar === */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--navbar-height);
+            background-color: var(--surface-color); border-bottom: 1px solid var(--border-color);
+            z-index: 1000; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .navbar ul { display: flex; list-style: none; margin: 0; padding: 0 1rem; overflow-x: auto; }
+        .navbar li a {
+            display: block; padding: 0 1rem; line-height: var(--navbar-height); text-decoration: none;
+            color: var(--header-color); font-weight: 700; white-space: nowrap;
+            transition: background-color 0.2s, color 0.2s; border-bottom: 2px solid transparent;
+        }
+        .navbar li a:hover { background-color: #e9ecef; color: #000; }
+        
+        /* === Main Content === */
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        h1, h2, h3 { color: var(--header-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-weight: 700; }
+        h1 { text-align: center; font-size: 2.5em; border-bottom: none; }
+        h2 { margin-top: 3em; font-size: 2em; }
+        h3 { margin-top: 2.5em; font-size: 1.5em; color: #007bff; border-bottom-style: dashed; }
+        h4 { color: #6f42c1; margin-top: 2em; }
+        h5 { color: #0056b3; margin-top: 1.5em; }
+        p, li { font-size: 1.1em; }
+        
+        /* === Professional Code Styling === */
+        pre, code, pre *, code * {
+            font-family: 'JetBrains Mono', monospace !important;
+            font-variant-ligatures: none;
+        }
+        
+        pre {
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 1.2em; overflow-x: auto; position: relative;
+            line-height: 1.6; font-size: 0.9em;
+            margin: 1em 0;
+        }
+        
+        code:not(pre > code) {
+            background-color: #e9ecef; color: #c7254e;
+            padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.85em;
+        }
+        
+        .copy-button {
+            position: absolute; top: 10px; right: 10px; background-color: var(--button-bg);
+            color: #ffffff; border: none; padding: 8px 12px;
+            border-radius: 5px; cursor: pointer; opacity: 0.7;
+            transition: opacity 0.2s, background-color 0.2s; font-family: 'Inter', sans-serif;
+        }
+        
+        pre:hover .copy-button { opacity: 1; }
+        .copy-button:hover { background-color: var(--button-hover-bg); }
+        .copy-button.copied { background-color: var(--button-copied-bg); }
+        
+        .note {
+            background-color: #fff3cd; border-left: 4px solid #ffeeba;
+            color: #664d03; padding: 1em; border-radius: 8px; margin: 1.5em 0;
+        }
+
+        /* === FIX for PrismJS Background Glitch === */
+        .token.operator, .token.entity, .token.url,
+        .language-css .token.string, .style .token.string {
+            background: transparent;
+        }
+    </style>
+  
+</head>
+<body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="#setup">Setup</a></li>
+            <li><a href="#tables">Tables</a></li>
+            <li><a href="#crud">CRUD</a></li>
+            <li><a href="#foreign-keys">Foreign Keys</a></li>
+            <li><a href="#streams">Streams</a></li>
+            <li><a href="#filtering">Filtering</a></li>
+            <li><a href="#aggregation">Aggregation</a></li>
+            <li><a href="#advanced">Advanced</a></li>
+            <li><a href="#migrations">Migrations</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1>Drift for Flutter Cheatsheet</h1>
+        <p>A comprehensive, single-file guide to Drift, the reactive persistence library for Dart & Flutter.</p>
+
+        <h2 id="setup">1. Setup</h2>
+        <p>Add the following dependencies to your <code>pubspec.yaml</code> file. The <code>drift_dev</code> and <code>build_runner</code> packages are for code generation, which is a core part of Drift.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-yaml">
+dependencies:
+  flutter:
+    sdk: flutter
+  drift: ^2.18.0
+  sqlite3_flutter_libs: ^0.5.20
+  path_provider: ^2.1.3
+  path: ^1.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  drift_dev: ^2.18.0
+  build_runner: ^2.4.9
+</code></pre>
+
+        <h2 id="tables">2. Defining Tables & Code Generation</h2>
+        <p>
+            Tables are defined as Dart classes that extend <code>Table</code>. You define columns as getters, and each column type has its own set of modifiers (e.g., <code>.autoIncrement()</code>, <code>.withLength()</code>, <code>.withDefault()</code>).
+        </p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+import 'package:drift/drift.dart';
+
+// Represents a category for todos
+@TableIndex(name: 'idx_category_name', columns: {#name})
+class Categories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 3, max: 32).unique()();
+}
+
+// Represents a user who creates todos
+class Users extends Table {
+  TextColumn get id => text()(); // Use a string ID for a user
+  TextColumn get name => text().withLength(min: 3, max: 50)();
+  @override
+  Set&lt;Column&gt; get primaryKey => {id};
+}
+
+// See the "Advanced Topics" section for the Priority enum and converter
+enum Priority { low, medium, high }
+
+class PriorityConverter extends TypeConverter&lt;Priority, int&gt; {
+  const PriorityConverter();
+  @override
+  Priority fromSql(int fromDb) => Priority.values[fromDb];
+  @override
+  int toSql(Priority value) => value.index;
+}
+
+class Todos extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text().withLength(min: 6, max: 50)();
+  TextColumn get content => text().named('body')();
+  BoolColumn get completed => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  
+  IntColumn get priority => integer().map(const PriorityConverter()).withDefault(const Constant(0))();
+  
+  // Foreign keys
+  IntColumn get categoryId => integer().nullable().references(Categories, #id, onDelete: KeyAction.setNull)();
+  TextColumn get userId => text().references(Users, #id, onDelete: KeyAction.cascade)();
+}
+</code></pre>
+        <p>After defining your tables, run the code generator to create the necessary boilerplate:</p>
+        <pre><button class="copy-button">Copy</button><code class="language-bash">
+dart run build_runner build --delete-conflicting-outputs
+</code></pre>
+
+        <h2 id="crud">3. CRUD Operations</h2>
+        <p>This section covers all fundamental data manipulation operations, with detailed explanations of when to use each method and why.</p>
+
+        <h3>Create (Insert)</h3>
+        <h4>Single Inserts</h4>
+        <ul>
+            <li><strong>Use <code>insert()</code></strong> when you only need the auto-incremented ID of the new row. It's efficient and direct.</li>
+            <li><strong>Use <code>insertReturning()</code></strong> when you need the complete, newly created object back from the database. This is useful if your table has default values (like <code>createdAt</code>) that you want to display in the UI immediately.</li>
+        </ul>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Insert a new todo and get back its generated ID
+Future&lt;int&gt; addTodo(TodosCompanion entry) {
+  return db.into(db.todos).insert(entry);
+}
+
+// Insert a new todo and get back the full object with defaults populated
+Future&lt;Todo&gt; addAndGetTodo(TodosCompanion entry) {
+  return db.into(db.todos).insertReturning(entry);
+}
+</code></pre>
+        <h4>Batch Inserts (High Performance)</h4>
+        <p><strong>Use <code>insertAll()</code> inside a <code>batch</code></strong> to insert multiple rows in a single database operation. This is significantly faster than calling <code>insert()</code> in a loop, as it reduces database overhead and performs the work in one transaction.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Insert a list of new todos efficiently
+Future&lt;void&gt; addTodos(List&lt;TodosCompanion&gt; entries) {
+  return db.batch((batch) {
+    batch.insertAll(db.todos, entries);
+  });
+}
+</code></pre>
+        <h4>Upsert (Insert or Update/Ignore)</h4>
+        <p>An "upsert" is an operation that inserts a new row or, if a row with the same key already exists, performs an alternative action like updating it or ignoring the insert.</p>
+        <ul>
+            <li><strong>Use <code>mode: InsertMode.insertOrReplace</code></strong> to insert a row, but if a row with the same primary or unique key already exists, it will be completely replaced. This is perfect for synchronizing data from an external source where the new data is considered the source of truth.</li>
+            <li><strong>Use <code>mode: InsertMode.insertOrIgnore</code></strong> to insert a row only if its primary or unique key does not already exist. If it does exist, the operation is silently ignored. This is useful for adding items where duplicates should simply be discarded, like importing a list of unique tags.</li>
+        </ul>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// INSERT OR REPLACE: If a user with this ID exists, their name will be updated.
+// If not, a new user will be created.
+Future&lt;void&gt; upsertUser(User user) {
+  return db.into(db.users).insert(user, mode: InsertMode.insertOrReplace);
+}
+
+// INSERT OR IGNORE: If a category named "Work" already exists, this does nothing.
+// Otherwise, it creates the new category.
+Future&lt;void&gt; createCategoryIfNotExists(CategoriesCompanion category) {
+  return db.into(db.categories).insert(category, mode: InsertMode.insertOrIgnore);
+}
+</code></pre>
+        
+        <h3>Read (Select)</h3>
+        <h4>Fetching Lists vs. Single Items</h4>
+        <ul>
+            <li><strong>Use <code>.get()</code></strong> to execute a query and retrieve a <code>List</code> of results. This is for fetching zero or more rows.</li>
+            <li><strong>Use <code>.getSingle()</code></strong> when you expect **exactly one** result. It will throw an exception if zero or more than one row is found. Use it when data integrity guarantees a single result (e.g., fetching by a unique key you know exists).</li>
+            <li><strong>Use <code>.getSingleOrNull()</code></strong> when you are looking for one specific item that **might not exist**. It safely returns <code>null</code> if no row is found and throws if multiple rows are found. This is the most common and safest way to fetch a single item by its ID.</li>
+        </ul>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Get all todos from the table
+Future&lt;List&lt;Todo&gt;&gt; getAllTodos() => db.select(db.todos).get();
+
+// Get a single todo by its ID. Safely returns null if not found.
+Future&lt;Todo?&gt; getTodoById(int id) {
+  return (db.select(db.todos)..where((t) => t.id.equals(id))).getSingleOrNull();
+}
+
+// Get a user by their unique ID, throwing an error if they are not found.
+// Use this only when you are certain the user must exist.
+Future&lt;User&gt; getUser(String id) {
+  return (db.select(db.users)..where((u) => u.id.equals(id))).getSingle();
+}
+</code></pre>
+
+        <h4>Pagination with <code>limit()</code> and <code>offset()</code></h4>
+        <p><strong>Use <code>limit()</code> and <code>offset()</code></strong> to implement pagination, fetching data in smaller chunks. This is essential for performance and good UX when dealing with large datasets.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Fetch a "page" of todos. For instance, page 2 with 20 items per page.
+Future&lt;List&lt;Todo&gt;&gt; getTodosByPage(int page, {int pageSize = 20}) {
+  final query = db.select(db.todos)
+    ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]) // Always order for consistent pages
+    ..limit(pageSize, offset: (page - 1) * pageSize);
+
+  return query.get();
+}
+</code></pre>
+        <h4>Sorting Results (<code>orderBy</code>)</h4>
+        <p>Use the <code>orderBy</code> clause to sort your query results. You can provide a list of ordering terms to sort by multiple columns.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Get all todos, sorted alphabetically by their title (Ascending order)
+Future&lt;List&lt;Todo&gt;&gt; getAllTodosSortedByTitle() {
+  return (db.select(db.todos)
+    ..orderBy([(t) => OrderingTerm.asc(t.title)]))
+    .get();
+}
+
+// Multi-column sorting: sort by priority first (highest first),
+// then by creation date (oldest first) for todos with the same priority.
+Future&lt;List&lt;Todo&gt;&gt; getSortedTasks() {
+  return (db.select(db.todos)
+    ..orderBy([
+      (t) => OrderingTerm.desc(t.priority), // High priority first
+      (t) => OrderingTerm.asc(t.createdAt),  // Oldest first
+    ]))
+    .get();
+}
+</code></pre>
+
+        <h3>Update</h3>
+        <h4>Partial vs. Full Updates</h4>
+        <ul>
+            <li><strong>Use <code>update().write()</code></strong> for targeted, partial updates. You only provide the columns you want to change. This is the most common and safest way to update.</li>
+            <li><strong>Use <code>update().replace()</code></strong> to overwrite an entire row with a new object. Be careful: any fields not specified in your object will be set to their default value or <code>NULL</code> in the database, potentially causing unintended data loss. Use this when you have a complete, updated object.</li>
+        </ul>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// PARTIAL UPDATE: Mark a todo as completed using write(). Only the 'completed' column is touched.
+Future&lt;int&gt; markTodoAsCompleted(int id) {
+  return (db.update(db.todos)..where((t) => t.id.equals(id)))
+    .write(const TodosCompanion(completed: Value(true)));
+}
+
+// FULL REPLACE: Replaces the entire row for the given entry's id using replace().
+Future&lt;void&gt; updateTodo(Todo entry) => db.update(db.todos).replace(entry);
+</code></pre>
+        <h4>Bulk Updates</h4>
+        <p><strong>Use <code>update().write()</code></strong> with a broader <code>where</code> clause to update multiple rows at once. This is far more efficient than fetching rows and updating them in a loop.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Mark all high-priority todos as completed
+Future&lt;int&gt; completeAllHighPriorityTodos() {
+  return (db.update(db.todos)..where((t) => t.priority.equals(Priority.high)))
+    .write(const TodosCompanion(completed: Value(true)));
+}
+</code></pre>
+
+        <h4>Update and Return</h4>
+        <p><strong>Use <code>updateReturning()</code></strong> when you perform an update and immediately need the complete, modified object(s) back. This avoids a follow-up `select` query and is useful for instantly refreshing UI state.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Update a todo's priority and get the full, updated Todo object back.
+Future&lt;List&lt;Todo&gt;&gt; setPriorityAndGet(int todoId, Priority newPriority) {
+  return (db.update(db.todos)..where((t) => t.id.equals(todoId)))
+    .writeReturning(TodosCompanion(priority: Value(newPriority)));
+}
+</code></pre>
+
+        <h3>Delete</h3>
+        <ul>
+            <li><strong>Use <code>delete().go()</code></strong> to delete rows and get back the number of affected rows. This is the standard delete operation.</li>
+            <li><strong>Use <code>delete().goAndReturn()</code></strong> if you need the data from the deleted rows. This is perfect for implementing an "Undo" feature, as it gives you the objects you would need to re-insert.</li>
+        </ul>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Delete a single todo by its ID
+Future&lt;int&gt; deleteTodo(int id) =>
+  (db.delete(db.todos)..where((t) => t.id.equals(id))).go();
+
+// Delete all completed todos and get the list of deleted objects for an "Undo" action
+Future&lt;List&lt;Todo&gt;&gt; deleteCompletedAndGet() {
+  return (db.delete(db.todos)..where((t) => t.completed.equals(true))).goAndReturn();
+}
+</code></pre>
+        <h4>Deleting All Rows</h4>
+        <p>To delete all rows from a table, simply call <code>go()</code> on a delete statement without a <code>where</code> clause. This is a destructive operation and should be used with care.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Delete ALL todos from the table. Use with caution!
+Future&lt;int&gt; deleteAllTodos() => db.delete(db.todos).go();
+</code></pre>
+        
+        <h2 id="foreign-keys">4. Foreign Keys & Joins</h2>
+        <p>Foreign keys create a link between two tables, enforcing relational integrity. A <code>JOIN</code> is a query that combines rows from two or more tables based on a related column between them.</p>
+
+        <h3>Defining Foreign Keys</h3>
+        <p>You define a foreign key using <code>.references()</code> on a column. It's crucial to also define an <code>onDelete</code> behavior.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+class Users extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+}
+
+class Posts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text()();
+  
+  // This column *must* contain an ID that exists in the `users` table.
+  IntColumn get authorId => integer().references(Users, #id,
+    // If the user with this ID is deleted, all of their posts will be deleted too.
+    // This is great for data consistency.
+    onDelete: KeyAction.cascade,
+  )();
+}
+</code></pre>
+        <h4>Cascading Actions (<code>onDelete</code>)</h4>
+        <ul>
+            <li><code>KeyAction.cascade</code>: If the parent row (e.g., a <code>User</code>) is deleted, all child rows (their <code>Posts</code>) are automatically deleted. Use this for tightly coupled data.</li>
+            <li><code>KeyAction.setNull</code>: If the parent row is deleted, the foreign key column in the child row is set to <code>NULL</code>. This requires the column to be nullable (e.g., <code>integer().nullable().references(...)</code>). Useful when the child can exist without the parent.</li>
+            <li><code>KeyAction.restrict</code> / <code>KeyAction.noAction</code> (Default): The database will throw an error and prevent the deletion of the parent row if any child rows reference it. This is the safest default behavior.</li>
+        </ul>
+
+        <h3>Querying with Joins</h3>
+        <p>Joins are the primary way to fetch related data in a single query. You almost always want to create a custom Dart class to hold the result of a join.</p>
+
+        <h4>Example: Fetching Posts with their Authors</h4>
+        <p>First, create a simple data class to hold the combined result:</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// A plain Dart class to hold the result of our join
+class PostWithAuthor {
+  final Post post;
+  final User author;
+
+  PostWithAuthor({required this.post, required this.author});
+}
+</code></pre>
+        <h4>Using <code>innerJoin</code></h4>
+        <p>An <code>innerJoin</code> only returns rows where the join condition is met in <strong>both</strong> tables. In this case, it will only return posts that have a valid, existing author.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+Future&lt;List&lt;PostWithAuthor&gt;&gt; getPostsWithAuthors() {
+  final query = db.select(db.posts).join([
+    innerJoin(db.users, db.users.id.equalsExp(db.posts.authorId))
+  ]);
+  
+  return query.map((row) {
+    return PostWithAuthor(
+      post: row.readTable(db.posts),
+      author: row.readTable(db.users),
+    );
+  }).get();
+}
+</code></pre>
+        <h4>Using <code>leftOuterJoin</code></h4>
+        <p>A <code>leftOuterJoin</code> (or simply <code>leftJoin</code>) returns <strong>all</strong> rows from the left table (<code>posts</code>), and the matched rows from the right table (<code>users</code>). If there is no match, the columns from the right table will be <code>null</code>. This is useful when a relationship is optional (e.g., a post could have a <code>null</code> author).</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Let's assume `authorId` in Posts could be nullable
+// We also need a new result class where the author can be null
+class PostWithOptionalAuthor {
+  final Post post;
+  final User? author; // Note the nullable User
+
+  PostWithOptionalAuthor({required this.post, this.author});
+}
+
+Future&lt;List&lt;PostWithOptionalAuthor&gt;&gt; getAllPosts() {
+  final query = db.select(db.posts).join([
+    leftOuterJoin(db.users, db.users.id.equalsExp(db.posts.authorId))
+  ]);
+
+  return query.map((row) {
+      return PostWithOptionalAuthor(
+        post: row.readTable(db.posts),
+        author: row.readTableOrNull(db.users), // Use readTableOrNull for left joins
+      );
+    }).get();
+}
+</code></pre>
+
+        <h2 id="streams">5. Understanding Streams (Reactivity)</h2>
+        <p>A Drift stream watches its query and emits a new result whenever the underlying data changes. Use <code>watch()</code> for lists and <code>watchSingleOrNull()</code> for single items. This is the foundation for building reactive UIs.</p>
+        
+        <h4>Watching a List of Items</h4>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Watch all todos, ordered by creation date
+Stream&lt;List&lt;Todo&gt;&gt; watchAllTodos() =>
+  (db.select(db.todos)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
+</code></pre>
+
+        <h4>Watching a Single Item</h4>
+        <p>This stream will emit a new `Todo` object whenever that specific todo is updated. If it's deleted, it will emit `null`.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+Stream&lt;Todo?&gt; watchTodoById(int id) =>
+  (db.select(db.todos)..where((t) => t.id.equals(id))).watchSingleOrNull();
+</code></pre>
+        
+        <h4>Watching an Aggregate Value (e.g., a Count)</h4>
+        <p>You can watch the result of an aggregate query. This stream will emit a new integer every time a todo is added or deleted.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+Stream&lt;int&gt; watchTotalTodoCount() {
+  final countExp = db.todos.id.count();
+  final query = db.selectOnly(db.todos)..addColumns([countExp]);
+  return query.map((row) => row.read(countExp) ?? 0).watchSingle();
+}
+</code></pre>
+
+        <h4>Watching a Join Query</h4>
+        <p>You can also watch complex join queries. The stream will update if a `Post` changes OR if its related `User` changes.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Using the PostWithAuthor class from the Foreign Keys section
+Stream&lt;List&lt;PostWithAuthor&gt;&gt; watchPostsWithAuthors() {
+  final query = db.select(db.posts).join([
+    innerJoin(db.users, db.users.id.equalsExp(db.posts.authorId))
+  ]);
+
+  return query.watch().map((rows) {
+    return rows.map((row) {
+      return PostWithAuthor(
+        post: row.readTable(db.posts),
+        author: row.readTable(db.users),
+      );
+    }).toList();
+  });
+}
+</code></pre>
+
+        <h2 id="filtering">6. Filtering & Query Examples</h2>
+        <p>Use the <code>where()</code> clause to filter your queries. Combine conditions with <code>&amp;</code> (AND) and <code>|</code> (OR).</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Find all high-priority, incomplete todos (priority is HIGH *AND* completed is FALSE)
+Future&lt;List&lt;Todo&gt;&gt; getUrgentIncompleteTodos() =>
+  (db.select(db.todos)
+    ..where((t) => t.priority.equals(Priority.high) &amp; t.completed.equals(false)))
+    .get();
+
+// Find all todos that are either completed OR have a high priority
+Future&lt;List&lt;Todo&gt;&gt; getCompletedOrHighPriorityTodos() =>
+  (db.select(db.todos)
+    ..where((t) => t.completed.equals(true) | t.priority.equals(Priority.high)))
+    .get();
+</code></pre>
+        <h3>Advanced Filtering & Subqueries</h3>
+        <p>A subquery is a query nested inside another query. Use <code>isInQuery()</code> to filter a main query based on the results of a subquery.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Find all users who have at least one completed todo
+Future&lt;List&lt;User&gt;&gt; getUsersWithCompletedTodos() {
+  // Subquery: Get the IDs of all users who have a completed todo.
+  final usersWithCompleted = db.selectOnly(db.todos)
+    ..addColumns([db.todos.userId])
+    ..where(db.todos.completed.equals(true));
+  
+  // Main query: Select all users whose ID is in the list from the subquery.
+  return (db.select(db.users)
+    ..where((u) => u.id.isInQuery(usersWithCompleted)))
+    .get();
+}
+</code></pre>
+        
+        <h2 id="aggregation">7. Aggregation</h2>
+        <p>Aggregation computes a single value from a set of rows, such as a <code>count</code>, <code>sum</code>, or <code>avg</code>. Use <code>selectOnly()</code> to perform these queries.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Count the total number of todos
+Future&lt;int&gt; getTotalTodoCount() async {
+  final countExp = db.todos.id.count();
+  final query = db.selectOnly(db.todos)..addColumns([countExp]);
+  final result = await query.getSingle();
+  return result.read(countExp) ?? 0;
+}
+
+// Count how many todos are completed, using a filter inside the count
+Future&lt;int&gt; getCompletedTodoCount() async {
+  final completedCount = db.todos.completed.count(filter: db.todos.completed.equals(true));
+  final query = db.selectOnly(db.todos)..addColumns([completedCount]);
+  final result = await query.getSingle();
+  return result.read(completedCount) ?? 0;
+}
+</code></pre>
+        
+        <h2 id="advanced">8. Advanced Topics</h2>
+        
+        <h3>Working with Enums</h3>
+        <p>Yes, you can and should store enums in Drift. The recommended way is to use a <code>TypeConverter</code> to map your Dart enum to a primitive type that SQLite understands (usually an <code>integer</code> for performance).</p>
+
+        <h4>Step 1: Define the Enum and Converter</h4>
+        <p>Create your enum and a converter class that maps the enum's index to an integer and back.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// The Dart enum you want to store
+enum Priority { low, medium, high }
+
+// The converter to map the enum to an integer (its index)
+class PriorityConverter extends TypeConverter&lt;Priority, int&gt; {
+  const PriorityConverter();
+  @override
+  Priority fromSql(int fromDb) => Priority.values[fromDb];
+
+  @override
+  int toSql(Priority value) => value.index;
+}
+</code></pre>
+
+        <h4>Step 2: Use the Converter in a Table</h4>
+        <p>In your table definition, use <code>.map()</code> to apply the converter to your column.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+class Todos extends Table {
+  // ... other columns
+  IntColumn get priority => integer().map(const PriorityConverter())();
+}
+</code></pre>
+        
+        <h4>Step 3: CRUD Operations with Enums</h4>
+        <p>Once set up, you can use your enum type directly in your Dart code. Drift handles the conversion automatically.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// CREATE: Insert a new todo with a specific priority
+Future&lt;void&gt; createHighPriorityTodo(String title) {
+  return db.into(db.todos).insert(TodosCompanion(
+    title: Value(title),
+    priority: Value(Priority.high), // Use the enum directly
+  ));
+}
+
+// READ: The returned `Todo` object will have a `Priority` enum, not an int
+Future&lt;List&lt;Todo&gt;&gt; getAllTodos() => db.select(db.todos).get();
+
+// UPDATE: Update a todo's priority
+Future&lt;void&gt; setPriority(int todoId, Priority newPriority) {
+  return (db.update(db.todos)..where((t) => t.id.equals(todoId)))
+    .write(TodosCompanion(priority: Value(newPriority)));
+}
+</code></pre>
+        
+        <h4>Step 4: Filtering & Sorting</h4>
+        <p>You can filter and sort using the enum type, making your queries much more readable.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// FILTER: Get all todos with high priority
+Future&lt;List&lt;Todo&gt;&gt; getHighPriorityTodos() {
+  return (db.select(db.todos)
+    ..where((t) => t.priority.equals(Priority.high)))
+    .get();
+}
+
+// SORT: Sort by priority, highest first
+Future&lt;List&lt;Todo&gt;&gt; getTodosSortedByPriority() {
+  return (db.select(db.todos)
+    ..orderBy([(t) => OrderingTerm.desc(t.priority)]))
+    .get();
+}
+// For more complex logical sorting, see the "Sorting by a Custom Enum Order" example.
+</code></pre>
+
+        <h3>Storing Custom Dart Objects</h3>
+        <p>For more complex objects that aren't enums, you can serialize them to a JSON string. Use this for non-relational data you won't filter on often.</p>
+        <h4>Example: Storing a <code>Car</code> object</h4>
+        <p>1. Define your custom Dart class and a <code>TypeConverter</code> that serializes it to/from a JSON <code>String</code>.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+import 'dart:convert';
+import 'package:drift/drift.dart';
+
+// 1. The custom class. Must have toJson/fromJson.
+class Car {
+  final String make;
+  final String model;
+  final int year;
+  Car({required this.make, required this.model, required this.year});
+
+  factory Car.fromJson(Map&lt;String, dynamic&gt; json) => Car(
+    make: json['make'],
+    model: json['model'],
+    year: json['year'],
+  );
+  Map&lt;String, dynamic&gt; toJson() => {
+    'make': make, 'model': model, 'year': year
+  };
+}
+
+// 2. The TypeConverter
+class CarConverter extends TypeConverter&lt;Car, String&gt; {
+  const CarConverter();
+  @override
+  Car fromSql(String fromDb) {
+    return Car.fromJson(json.decode(fromDb) as Map&lt;String, dynamic&gt;);
+  }
+
+  @override
+  String toSql(Car value) {
+    return json.encode(value.toJson());
+  }
+}
+
+// 3. The table using the converter
+class Garages extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get location => text()();
+  TextColumn get car => text().map(const CarConverter())();
+}
+</code></pre>
+        
+        <h2 id="migrations">9. A Simple Guide to Migrations</h2>
+        <p>Migrations are instructions you write to safely update your database schema when your app evolves. You define these steps in your main <code>@DriftDatabase</code> class by overriding the <code>migration</code> getter and incrementing the <code>schemaVersion</code>.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+@DriftDatabase(tables: [Todos, Categories])
+class AppDatabase extends _$AppDatabase {
+  // ... constructor ...
+
+  @override
+  int get schemaVersion => 5;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          await m.addColumn(todos, todos.completed);
+        }
+        if (from < 3) {
+          await m.addColumn(todos, todos.priority);
+        }
+        if (from < 4) {
+          await m.createTable(categories);
+          await m.addColumn(todos, todos.categoryId);
+        }
+        if (from < 5) {
+          await m.renameColumn(todos, 'body', todos.content);
+        }
+      },
+    );
+  }
+}
+</code></pre>
+        
+        <h4 id="when-to-migrate">When is a Migration Necessary?</h4>
+        <p>The core principle is simple: <strong>You need a migration whenever the physical structure (schema) of the database on the user's device needs to change.</strong> If your Dart code changes but the underlying database structure doesn't, you don't need a migration.</p>
+        <ul>
+            <li><strong>You NEED a migration for:</strong> Adding/removing a table or column; renaming a table or column; changing a column's type or constraints (e.g., adding <code>unique()</code>).</li>
+            <li><strong>You DO NOT need a migration for:</strong> Changing query logic (in DAOs or select statements); adding/modifying a <code>TypeConverter</code> if the SQL type is the same; changing a Dart getter name if you use <code>.named()</code> to keep the SQL name stable.</li>
+        </ul>
+        
+        <h4>Migration Best Practices & Tips</h4>
+        <ul>
+            <li><strong>Never Lose Data:</strong> Before releasing an app with a migration, test it thoroughly. The best way is to take a database file from the old app version and see if the new version opens it and migrates it correctly without data loss or crashes.</li>
+            <li><strong>Use Schema Verification:</strong> Drift can automatically test your migrations for you!
+                <ol>
+                    <li>Generate a "schema dump" from a working version of your app: <br><code>dart run drift_dev schema dump lib/database.dart schema/</code></li>
+                    <li>Commit these JSON files.</li>
+                    <li>After making schema changes and writing a migration, run the test: <br><code>dart run drift_dev schema validate schema/</code></li>
+                    <li>This will create databases for each old version and run your <code>onUpgrade</code> logic, telling you if you've written a valid migration.</li>
+                </ol>
+            </li>
+            <li><strong>Keep Migrations Simple:</strong> Each <code>if (from < x)</code> block should be a small, logical step. Avoid complex data transformations inside migrations if possible. It's often safer to do data clean-up in your application logic after the migration.</li>
+            <li><strong>No Downgrades:</strong> Drift (and SQLite in general) does not support database downgrades. The migration path is always forward. Ensure your <code>schemaVersion</code> only ever increases.</li>
+            <li><strong>Teamwork:</strong> When working in a team, agree on who is responsible for bumping the schema version to avoid conflicts. Schema changes should be communicated clearly in pull requests.</li>
+        </ul>
+
+        <h4>Designing for Fewer Migrations (The "Migration-less" Approach)</h4>
+        <p>While migrations are a powerful and necessary tool, you can design your schema to reduce how often you need them. The primary technique is to use a flexible data column (like a JSON string) for information that is likely to change often.</p>
+        <p><strong>Scenario:</strong> You have a <code>UserProfile</code> table. Core fields like <code>id</code> and <code>email</code> are stable. But you also want to store user preferences, which might change frequently as you add new features (e.g., <code>theme</code>, <code>notificationsEnabled</code>, <code>fontSize</code>).</p>
+        <p><strong>The "Migration-heavy" approach:</strong> Add a new column for every preference.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+class UserProfiles extends Table {
+    // ...
+    TextColumn get theme => text().withDefault(const Constant('light'))();
+    BoolColumn get notificationsEnabled => boolean().withDefault(const Constant(true))();
+    // Uh oh, adding `fontSize` next month requires another migration...
+}
+</code></pre>
+        <p><strong>The "Migration-light" approach:</strong> Store all preferences in a single <code>text</code> column as a JSON object.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Assuming a TypeConverter for Map&lt;String, dynamic&gt; to String
+class UserProfiles extends Table {
+    // ...
+    TextColumn get preferences => text().map(const JsonMapConverter())();
+}
+</code></pre>
+        <p>Now, you can add <code>fontSize</code> to your <code>preferences</code> map in your Dart code and save it to the database <strong>without needing to change the schema or write a migration.</strong></p>
+        <h5>The Trade-offs (This is Crucial!)</h5>
+        <p>This flexibility comes at a significant cost:</p>
+        <ul>
+            <li><strong>You lose database-level querying:</strong> You cannot efficiently ask the database "give me all users who have dark theme enabled." You'd have to fetch all users and filter them in Dart, or use an inefficient <code>LIKE</code> query.</li>
+            <li><strong>You lose type safety and constraints:</strong> The database just sees a string. It can't enforce that <code>notificationsEnabled</code> must be a boolean or that <code>theme</code> must be one of "light" or "dark". All validation must happen in your application code.</li>
+            <li><strong>Data can become inconsistent:</strong> One user might have <code>{'theme': 'dark'}</code> while another has <code>{'theme_preference': 'dark_mode'}</code>. A rigid schema prevents this.</li>
+        </ul>
+        <p><strong>Conclusion:</strong> Use a hybrid approach. For your core, relational, and frequently-queried data, use a proper, rigid schema and embrace migrations. For non-essential, flexible, or "settings-like" data, using a JSON column is a smart strategy to avoid unnecessary migration churn.</p>
+
+
+        <div class="note">
+            <h4>How do I delete a column?</h4>
+            <p>If you absolutely must remove a column, Drift provides a powerful <code>alterTable</code> helper. This tool safely performs the complex, multi-step process for you: it creates a new table with the correct schema, copies all your existing data over (omitting the column to be deleted), drops the old table, and renames the new one.</p>
+            <pre><button class="copy-button">Copy</button><code class="language-dart">
+// In your onUpgrade callback for the next schema version:
+if (from < 6) {
+    await m.alterTable(TableMigration(
+        db.todos,
+        columnDeletions: [db.todos.priority],
+    ));
+}
+</code></pre>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const copyButtons = document.querySelectorAll('.copy-button');
+            copyButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const pre = button.parentElement;
+                    const code = pre.querySelector('code');
+                    const textToCopy = code.innerText;
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        button.innerText = 'Copied!';
+                        button.classList.add('copied');
+                        setTimeout(() => {
+                            button.innerText = 'Copy';
+                            button.classList.remove('copied');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
