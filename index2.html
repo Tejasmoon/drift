@@ -59,10 +59,13 @@
         
         /* === Main Content === */
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-        h1, h2, h3 { color: var(--header-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-weight: 700; }
+        h1, h2, h3, h4, h5 { font-weight: 700; }
         h1 { text-align: center; font-size: 2.5em; border-bottom: none; }
-        h2 { margin-top: 3em; font-size: 2em; }
-        h3 { margin-top: 2.5em; font-size: 1.5em; color: #007bff; border-bottom-style: dashed; }
+        h2 { margin-top: 3em; font-size: 2em; color: var(--header-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        h3 { margin-top: 2.5em; font-size: 1.5em; color: #007bff; border-bottom-style: dashed; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        h4 { margin-top: 2em; font-size: 1.3em; color: var(--accent-color); border-bottom: 1px solid #e9ecef; padding-bottom: 5px; }
+        h5 { margin-top: 1em; font-size: 1.1em; font-weight: 700; color: var(--text-color); }
+        
         p, li { font-size: 1.1em; }
         
         /* === Professional Code Styling === */
@@ -117,6 +120,8 @@
             <li><a href="#filtering">Filtering</a></li>
             <li><a href="#aggregation">Aggregation</a></li>
             <li><a href="#advanced">Advanced</a></li>
+            <li><a href="#migrations">Migrations</a></li>
+            <li><a href="#best-practices">Best Practices</a></li>
         </ul>
     </nav>
     <div class="container">
@@ -162,7 +167,7 @@ class Users extends Table {
   TextColumn get name => text().withLength(min: 3, max: 50)();
 
   @override
-  Set<Column> get primaryKey => {id}; // Define a custom primary key
+  Set&lt;Column&gt; get primaryKey => {id}; // Define a custom primary key
 }
 
 // A Dart enum for priority levels
@@ -185,7 +190,7 @@ class Todos extends Table {
   TextColumn get userId => text().references(Users, #id)();
   
   // A custom column that will be stored as an integer, but handled as a Dart enum
-  IntColumn get priority => intEnum<Priority>().withDefault(const Constant(0))();
+  IntColumn get priority => intEnum&lt;Priority&gt;().withDefault(const Constant(0))();
 }
 </code></pre>
         <p>After defining your tables, run the code generator to create the necessary boilerplate:</p>
@@ -195,12 +200,12 @@ dart run build_runner build --delete-conflicting-outputs
 
         <h3>Foreign Keys</h3>
         <p>
-          Foreign keys are essential for defining <b>relationships</b> between tables and ensuring <b>data integrity</b>. They prevent you from having an item that references a non-existent entry in another table. Drift makes them type-safe and easy to use with the `.references()` syntax.
+            Foreign keys are essential for defining <b>relationships</b> between tables and ensuring <b>data integrity</b>. They prevent you from having an item that references a non-existent entry in another table. Drift makes them type-safe and easy to use with the <code>.references()</code> syntax.
         </p>
         
-        <h4>Basic Reference: `references()`</h4>
+        <h4>Basic Reference: <code>references()</code></h4>
         <p>
-          This is the most common use case. The `todos` table has a `categoryId` column that references the `id` column of the `categories` table. Drift ensures you cannot insert a todo with a category ID that doesn't exist.
+            This is the most common use case. The <code>todos</code> table has a <code>categoryId</code> column that references the <code>id</code> column of the <code>categories</code> table. Drift ensures you cannot insert a todo with a category ID that doesn't exist.
         </p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // `Todos` table referencing `Categories`
@@ -211,17 +216,17 @@ class Todos extends Table {
 }
 </code></pre>
         <p>
-          Here, the `#id` syntax is a Dart symbol that references the `id` column on the `Categories` table, which is a powerful way to ensure type safety. Drift will automatically generate a `categoryId` column.
+            Here, the <code>#id</code> syntax is a Dart symbol that references the <code>id</code> column on the <code>Categories</code> table, which is a powerful way to ensure type safety. Drift will automatically generate a <code>categoryId</code> column.
         </p>
 
-        <h4>On Delete Action: `onDelete`</h4>
+        <h4>On Delete Action: <code>onDelete</code></h4>
         <p>
-          Foreign keys can also define what happens when a referenced row is deleted. This is crucial for maintaining a clean and consistent database. The two most common actions are `cascade` and `setNull`.
+            Foreign keys can also define what happens when a referenced row is deleted. This is crucial for maintaining a clean and consistent database. The two most common actions are <code>cascade</code> and <code>setNull</code>.
         </p>
         
         <p><b>KeyAction.cascade</b> (Delete the children)</p>
         <p>
-          This is the most destructive action. When you delete a row from the parent table, <b>all rows in the child table that reference it will also be deleted automatically</b>. This is useful for strong, hierarchical relationships, like an album and its photos.
+            This is the most destructive action. When you delete a row from the parent table, <b>all rows in the child table that reference it will also be deleted automatically</b>. This is useful for strong, hierarchical relationships, like an album and its photos.
         </p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // A `Photos` table that is strongly linked to an `Albums` table
@@ -244,7 +249,7 @@ class Photos extends Table {
 
         <p><b>KeyAction.setNull</b> (Unlink the children)</p>
         <p>
-          This action is less destructive. When you delete a parent row, the foreign key column in all child rows that reference it is simply <b>set to `null`</b>. This is perfect for the `todos` and `categories` relationship, where a todo can exist without a category.
+            This action is less destructive. When you delete a parent row, the foreign key column in all child rows that reference it is simply <b>set to <code>null</code></b>. This is perfect for the <code>todos</code> and <code>categories</code> relationship, where a todo can exist without a category.
         </p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // A `Todos` table referencing `Categories` with `setNull`
@@ -261,7 +266,7 @@ class Todos extends Table {
 
         <h4>Foreign Key to a non-integer Primary Key</h4>
         <p>
-          Foreign keys don't have to point to an `integer` ID. The `todos` table references the `Users` table's string-based primary key.
+            Foreign keys don't have to point to an <code>integer</code> ID. The <code>todos</code> table references the <code>Users</code> table's string-based primary key.
         </p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // The `Users` table has a string primary key
@@ -269,7 +274,7 @@ class Users extends Table {
   TextColumn get id => text()();
   // ... other columns
   @override
-  Set<Column> get primaryKey => {id};
+  Set&lt;Column&gt; get primaryKey => {id};
 }
 
 // The `Todos` table correctly references the string ID of the `Users` table
@@ -280,25 +285,95 @@ class Todos extends Table {
 </code></pre>
 
         <h2 id="crud">3. CRUD Operations</h2>
+
+        <h3 id="companion-vs-dataclass">Companion vs. Data Class: The Write/Read Distinction</h3>
+        <p>
+            When working with Drift, it's crucial to understand the difference between the two main types of objects generated for each table (e.g., <code>Todos</code> table):
+        </p>
+        
+        <h4>1. The Data Class (e.g., <code>Todo</code>, <code>Category</code>)</h4>
+        <p>
+            The plain data class represents a <b>complete row read from the database</b>. It includes <b>all</b> columns, including auto-incremented primary keys (like <code>id</code>) and columns with default values (like <code>completed</code> or <code>createdAt</code>). You get this back when you use **<code>.get()</code>** or **<code>.watch()</code>**.
+        </p>
+        
+        <h4>2. The Companion Class (e.g., <code>TodosCompanion</code>)</h4>
+        <p>
+            The Companion class represents <b>data to be written to the database</b>. There are two primary ways to construct it, depending on the operation:
+        </p>
+        
+        <h5>Method A: Default Constructor (The **Targeted Update** method)</h5>
+        <p>
+            This constructor requires the use of the special wrapper, <b><code>Value&lt;T&gt;</code></b>, for every field. This is necessary because it clearly signals your intent to the database:
+            <ul>
+                <li><b>Explicitly Set a Value:</b> Use <code>Value('New Title')</code>.</li>
+                <li><b>Explicitly Set to NULL:</b> Use <code>Value(null)</code> for nullable columns.</li>
+                <li><b>Omit/Ignore:</b> Simply omit the field to let the database use its default or ignore it during an update.</li>
+            </ul>
+        </p>
+        <p><b>Use Case:</b> When performing **targeted updates** (e.g., changing only the `completed` status of a `Todo`).</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Use this for UPDATES or when you only have partial data
+await db.update(db.todos).write(
+  const TodosCompanion(
+    completed: Value(true), // Only update this field
+    // other fields are omitted and IGNORED
+  ),
+);
+</code></pre>
+        
+        <h5>Method B: Named <code>.insert()</code> Constructor (The **Convenience Insert** method)</h5>
+        <p>
+            The named constructor, **<code>TodosCompanion.insert(...)</code>**, is generated for tables and allows you to pass non-nullable values *directly*, without the `Value()` wrapper.
+        </p>
+        <p>
+            <b>It only accepts fields that are required for a new row</b> (i.e., non-nullable columns without defaults), and it automatically handles auto-incremented fields (`id`) and fields with defaults (`createdAt`, `completed`) for you.
+        </p>
+        <p><b>Use Case:</b> When performing a **full, simple insertion** of a new row.</p>
+        <pre><button class="copy-button">Copy</button><code class="language-dart">
+// Use this only for INSERTS, as it's cleaner
+await db.into(db.todos).insert(
+  TodosCompanion.insert(
+    title: 'New Task Title',      // No Value() wrapper needed!
+    content: 'Full content notes', // No Value() wrapper needed!
+    userId: currentUser.id,      // Required foreign key
+  ),
+);
+</code></pre>
+        <p>
+            Note that **in both cases**, you must still use the fluent API: **`db.into(db.todos).insert(...)`** to tell Drift where to send the data. The Companion object is just the payload.
+        </p>
+        
         <p>This section covers all fundamental data manipulation operations, with explanations of when to use each method.</p>
 
         <h3>Create (Insert)</h3>
         <h4>Method 1: <code>insert()</code></h4>
-        <p><b>When to use:</b> The standard method for creating a new, unique record. It's the most common insert operation.</p>
-        <p><b>Why:</b> It's simple and efficient. It returns the <code>Future&lt;int&gt;</code> of the auto-incremented <code>id</code> of the new row, which is often all you need.</p>
+        <p><b>When to use:</b> The standard method for creating a new, unique record.</p>
+        <p><b>Why:</b> It's simple and efficient. It returns the <code>Future&lt;int&gt;</code> of the auto-incremented <code>id</code> of the new row.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
-// Insert a new todo and get back its generated ID
-Future<int> addTodo(TodosCompanion entry) {
+// Option A: Using the convenience constructor (recommended for inserts)
+Future&lt;int&gt; addTodo(String title, String content, String userId) {
+  return db.into(db.todos).insert(
+    TodosCompanion.insert(
+      title: title,
+      content: content,
+      uuid: Uuid().v4(), // Still a direct value
+      userId: userId,
+      // priority and completed fields are omitted as they use database defaults
+    ),
+  );
+}
+
+// Option B: Using the default constructor with Value() (more explicit)
+Future&lt;int&gt; addTodoExplicit(TodosCompanion entry) {
   return db.into(db.todos).insert(entry);
 }
 
-// Example usage:
-await addTodo(TodosCompanion(
+// Example usage of the explicit method from earlier:
+await addTodoExplicit(TodosCompanion(
   title: Value('Buy groceries'),
   content: Value('Milk, bread, cheese'),
   uuid: Value(Uuid().v4()),
   userId: Value(currentUser.id),
-  // Inserting an enum value directly
   priority: Value(Priority.high),
 ));
 </code></pre>
@@ -307,87 +382,95 @@ await addTodo(TodosCompanion(
         <p><b>When to use:</b> When you need the complete, newly created object back immediately after inserting it, including all default values (like <code>id</code> and <code>createdAt</code>).</p>
         <p><b>Why:</b> This saves you from making a second query to fetch the new item. It's perfect for immediately adding the new item to a list in your UI.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
-// Insert a new todo and get back the full object
-Future<Todo> addAndGetTodo(TodosCompanion entry) {
-  return db.into(db.todos).insertReturning(entry);
+// Insert a new todo using the convenience constructor and get back the full object
+Future&lt;Todo&gt; addAndGetTodo(String title, String content, String userId) {
+  return db.into(db.todos).insertReturning(
+    TodosCompanion.insert(
+      title: title,
+      content: content,
+      uuid: Uuid().v4(),
+      userId: userId,
+    )
+  );
 }
 
 // Example usage: get the created item with its ID and created date
-final newTodo = await addAndGetTodo(TodosCompanion(
-  title: Value('Review report'),
-  content: Value('Review and send the quarterly report.'),
-  uuid: Value(Uuid().v4()),
-  userId: Value(currentUser.id),
-  priority: Value(Priority.medium),
-));
+final newTodo = await addAndGetTodo(
+  'Review report',
+  'Review and send the quarterly report.',
+  currentUser.id,
+);
 print('New todo ID: ${newTodo.id}, priority: ${newTodo.priority}');
 </code></pre>
 
         <h4>Method 3: <code>insertOnConflictUpdate()</code> (Upsert)</h4>
-        <p><b>When to use:</b> When synchronizing data, for example from a remote API. You want to insert a record if it's new, but update it if a record with the same primary key or unique key already exists.</p>
-        <p><b>Why:</b> It elegantly handles both insert and update logic in a single, atomic database operation, preventing "UNIQUE constraint failed" errors and simplifying your sync code.</p>
+        <p><b>When to use:</b> When synchronizing data. Insert if new, update if a record with the same primary key or unique key already exists.</p>
+        <p><b>Why:</b> It handles both insert and update logic in a single, atomic database operation.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
-// Note: We can pass either a full data class or a Companion.
-// If a Todo with the same UUID or primary key exists, it will be updated. Otherwise, it's inserted.
-Future<void> upsertTodo(TodosCompanion entry) {
+// For Upsert, we usually need the default constructor with Value() 
+// because we are explicitly setting a unique key (like `uuid` or primary key) 
+// to signal the conflict check.
+Future&lt;void&gt; upsertTodo(TodosCompanion entry) {
   return db.into(db.todos).insertOnConflictUpdate(entry);
 }
 
-// Example for upserting a Todo based on its `uuid`.
+// Example: upserting a Todo based on its `uuid`.
 final todoFromApi = TodosCompanion(
   title: Value('Update from API'),
   content: Value('New content for this todo'),
-  uuid: Value('a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6'),
-  priority: Value(Priority.high), // Can also upsert the priority
+  uuid: Value('a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6'), // Key for conflict check
+  priority: Value(Priority.high), 
 );
-await upsertTodo(todoFromApi); // If a todo with this uuid exists, it's updated. Otherwise, it's inserted.
+await upsertTodo(todoFromApi); 
 </code></pre>
 
         <h4>Method 4: <code>batch()</code> with <code>insertAll()</code></h4>
         <p><b>When to use:</b> When you need to insert a large number of records at once (e.g., more than 10-20).</p>
-        <p><b>Why:</b> It's a huge performance optimization. A batch wraps all operations in a single transaction, which is significantly faster than performing many individual <code>insert</code> calls, each in its own transaction.</p>
+        <p><b>Why:</b> It's a huge performance optimization by wrapping all operations in a single transaction.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Insert multiple todos efficiently
-Future<void> addMultipleTodos(List<TodosCompanion> entries) {
+Future&lt;void&gt; addMultipleTodos(List&lt;TodosCompanion&gt; entries) {
   return db.batch((b) {
-    b.insertAll(db.todos, entries);
-    // You can add other operations here, like inserting into another table
-    // b.insertAll(db.categories, someCategories);
+    // These entries can be created using either TodosCompanion() or TodosCompanion.insert()
+    b.insertAll(db.todos, entries); 
   });
 }
 
-// Example: Inserting a list of todos from a JSON response
-final todosFromApi = jsonList.map((json) => TodosCompanion.fromJson(json)).toList();
-await addMultipleTodos(todosFromApi);
+// Example: Creating a list using the convenience constructor
+final entries = [
+  TodosCompanion.insert(title: 'T1', content: 'C1', userId: 'user1', uuid: 'u1'),
+  TodosCompanion.insert(title: 'T2', content: 'C2', userId: 'user1', uuid: 'u2'),
+];
+await addMultipleTodos(entries);
 </code></pre>
 
         <h3>Read (Select)</h3>
-        <p>Use <code>select</code> to build your query and <code>get()</code> to execute it once.</p>
+        <p>Use <code>select</code> to build your query and <code>get()</code> to execute it once. The result is always the **Data Class** (e.g., <code>Todo</code>).</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Get all todos and order them by creation date
-Future<List<Todo>> getAllTodosSorted() =>
+Future&lt;List&lt;Todo&gt;&gt; getAllTodosSorted() =>
   db.select(db.todos)..orderBy([(t) => OrderingTerm.desc(t.createdAt)]).get();
 
 // Get a single todo by its ID. Use getSingleOrNull() for robustness.
-Future<Todo?> getTodoById(int id) =>
+Future&lt;Todo?&gt; getTodoById(int id) =>
   (db.select(db.todos)..where((t) => t.id.equals(id))).getSingleOrNull();
 
 // Get todos filtered by a specific enum value
-Future<List<Todo>> getTodosByPriority(Priority priority) =>
+Future&lt;List&lt;Todo&gt;&gt; getTodosByPriority(Priority priority) =>
   (db.select(db.todos)..where((t) => t.priority.equals(priority))).get();
 
 // Get todos with a priority higher than a specific value (e.g., all high-priority todos)
-Future<List<Todo>> getHigherPriorityTodos(Priority priority) =>
+Future&lt;List&lt;Todo&gt;&gt; getHigherPriorityTodos(Priority priority) =>
   (db.select(db.todos)..where((t) => t.priority.isBiggerThan(priority))).get();
 </code></pre>
 
         <h3>Update</h3>
         <h4>Method 1: <code>replace()</code></h4>
         <p><b>When to use:</b> When you have a full data object and want to update every field in the database to match it. The object must have a primary key.</p>
-        <p><b>Why:</b> It's simple and direct for overwriting an entire record. However, it can be less efficient if you only need to change one or two fields.</p>
+        <p><b>Why:</b> It's simple and direct for overwriting an entire record.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Replaces the entire row for the given entry's id.
-Future<void> updateTodo(Todo entry) => db.update(db.todos).replace(entry);
+Future&lt;void&gt; updateTodo(Todo entry) => db.update(db.todos).replace(entry);
 
 // Example: update a todo with new title, content, and priority
 final updatedTodo = todo.copyWith(
@@ -399,20 +482,20 @@ await updateTodo(updatedTodo);
 </code></pre>
 
         <h4>Method 2: <code>write()</code></h4>
-        <p><b>When to use:</b> The preferred method for targeted updates. Use this when you only want to change specific columns.</p>
-        <p><b>Why:</b> It's more efficient as it only sends the data for the columns you specify in the <code>TodosCompanion</code>. Use <code>Value(someValue)</code> to explicitly set a field.</p>
+        <p><b>When to use:</b> The preferred method for **targeted updates**. Use the default `Companion` constructor with `Value()` wrappers here.</p>
+        <p><b>Why:</b> It's efficient as it only sends the data for the columns you specify.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Mark a todo as completed and change its priority
-Future<int> completeAndPrioritizeTodo(int id) {
+Future&lt;int&gt; completeAndPrioritizeTodo(int id) {
   return (db.update(db.todos)..where((t) => t.id.equals(id)))
     .write(const TodosCompanion(
-      completed: Value(true),
-      priority: Value(Priority.medium),
+      completed: Value(true), // Only change this
+      priority: Value(Priority.medium), // And this
     ));
 }
 
 // Update only the priority of a single todo
-Future<int> updatePriority(int id, Priority newPriority) {
+Future&lt;int&gt; updatePriority(int id, Priority newPriority) {
   return (db.update(db.todos)..where((t) => t.id.equals(id)))
     .write(TodosCompanion(priority: Value(newPriority)));
 }
@@ -420,10 +503,10 @@ Future<int> updatePriority(int id, Priority newPriority) {
 
         <h4>Method 3: <code>writeReturning()</code></h4>
         <p><b>When to use:</b> When you perform a targeted update and need the full, updated object(s) back immediately.</p>
-        <p><b>Why:</b> Just like <code>insertReturning</code>, it saves a second query. It's perfect for updating an item in a list and instantly refreshing the UI with the confirmed new data.</p>
+        <p><b>Why:</b> It saves a second query and instantly refreshes the UI with the confirmed new data.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Mark a single todo as completed and get the updated object
-Future<Todo?> markAsCompletedAndGet(int id) {
+Future&lt;Todo?&gt; markAsCompletedAndGet(int id) {
   return (db.update(db.todos)..where((t) => t.id.equals(id)))
     .writeReturning(const TodosCompanion(completed: Value(true)))
     .then((list) => list.isNotEmpty ? list.first : null);
@@ -436,11 +519,11 @@ Future<Todo?> markAsCompletedAndGet(int id) {
         <p><b>Why:</b> It efficiently deletes all rows matching the <code>where</code> clause and returns a <code>Future&lt;int&gt;</code> with the count of deleted rows.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Delete a single todo by its ID
-Future<int> deleteTodo(int id) =>
+Future&lt;int&gt; deleteTodo(int id) =>
   (db.delete(db.todos)..where((t) => t.id.equals(id))).go();
 
 // Delete all todos with a low priority
-Future<int> deleteLowPriorityTodos() =>
+Future&lt;int&gt; deleteLowPriorityTodos() =>
   (db.delete(db.todos)..where((t) => t.priority.equals(Priority.low))).go();
 </code></pre>
 
@@ -448,51 +531,16 @@ Future<int> deleteLowPriorityTodos() =>
         <p>A Drift stream watches its query and emits a new result whenever the underlying data changes, making it perfect for building real-time UIs in Flutter with <code>StreamBuilder</code>.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Watch all todos, ordered by creation date
-Stream<List<Todo>> watchAllTodos() =>
+Stream&lt;List&lt;Todo&gt;&gt; watchAllTodos() =>
   (db.select(db.todos)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
 
 // Watch a single todo by ID. It emits a new value if the todo is updated or deleted.
-Stream<Todo?> watchTodoById(int id) =>
+Stream&lt;Todo?&gt; watchTodoById(int id) =>
   (db.select(db.todos)..where((t) => t.id.equals(id))).watchSingleOrNull();
-
-// Watch only the high-priority todos
-Stream<List<Todo>> watchHighPriorityTodos() =>
-  (db.select(db.todos)..where((t) => t.priority.equals(Priority.high))).watch();
-
-// Watch the count of all todos and emit a new number whenever a todo is added or deleted
-Stream<int> watchTotalTodoCount() {
-  final countExp = db.todos.id.count();
-  final query = db.selectOnly(db.todos)..addColumns([countExp]);
-  return query.map((row) => row.read(countExp) ?? 0).watchSingle();
-}
 </code></pre>
 
         <h3 id="advanced-streams">Advanced Stream Use Cases</h3>
-
-        <h4>Watching a Dynamic Filter (Search)</h4>
-        <p><b>When to use:</b> For real-time search or filtering.</p>
-        <p><b>Why:</b> The `watch()` method is smart enough to listen to changes on the `todos` table. When a new todo is added or an existing one is updated, the stream will check if the new data matches the filter and emit a new list if necessary.</p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-// Watch todos that contain a search term in their title or content.
-Stream<List<Todo>> watchTodosWithSearchTerm(String searchTerm) {
-  return (db.select(db.todos)
-    ..where((t) => t.title.like('%$searchTerm%') | t.content.like('%$searchTerm%'))
-    ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
-  ).watch();
-}
-
-// Example usage in a Flutter app:
-// StreamBuilder<List<Todo>>(
-//   stream: watchTodosWithSearchTerm(mySearchController.text),
-//   builder: (context, snapshot) {
-//     // ... build your list view here
-//   },
-// )
-</code></pre>
-
-        <h4>Watching a Join</h4>
-        <p><b>When to use:</b> When your UI needs to display data from multiple related tables and react to changes in any of them. For example, a list of todos with their associated category names.</p>
-        <p><b>Why:</b> The stream automatically rebuilds the list whenever a todo is added/updated/deleted or a category is added/updated/deleted. This ensures your UI is always up-to-date with the complex, joined data.</p>
+        <p><b>Watching a Join</b></p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // A data class to represent the joined data
 class TodoWithCategory {
@@ -502,7 +550,7 @@ class TodoWithCategory {
 }
 
 // Watch all todos and their associated categories.
-Stream<List<TodoWithCategory>> watchAllTodosWithCategory() {
+Stream&lt;List&lt;TodoWithCategory&gt;&gt; watchAllTodosWithCategory() {
   final query = db.select(db.todos).join([
     leftOuterJoin(db.categories, db.categories.id.equalsExp(db.todos.categoryId)),
   ]);
@@ -518,64 +566,26 @@ Stream<List<TodoWithCategory>> watchAllTodosWithCategory() {
 }
 </code></pre>
 
-        <h4>Watching a Grouped Aggregate</h4>
-        <p><b>When to use:</b> To display summary data that needs to be updated in real-time. A common use case is a dashboard or a sidebar that shows statistics.</p>
-        <p><b>Why:</b> This stream will emit a new list of counts whenever a todo is added, deleted, or its category is changed. You can show a live count of todos for each category without needing to manually refresh the data.</p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-// A data class to hold our grouped results
-class CategoryTodoCount {
-  final String categoryName;
-  final int todoCount;
-  CategoryTodoCount({required this.categoryName, required this.todoCount});
-}
-
-// Watch the number of todos per category.
-Stream<List<CategoryTodoCount>> watchCategoryTodoCounts() {
-  final todoCount = db.todos.id.count();
-  final query = db.select(db.categories).join([
-    leftOuterJoin(db.todos, db.todos.categoryId.equalsExp(db.categories.id)),
-  ])
-  ..addColumns([todoCount])
-  ..groupBy([db.categories.id]);
-
-  return query.watch().map((rows) {
-    return rows.map((row) => CategoryTodoCount(
-      categoryName: row.readTable(db.categories).name,
-      todoCount: row.read(todoCount) ?? 0,
-    )).toList();
-  });
-}
-</code></pre>
-
         <h2 id="filtering">5. Filtering & Query Examples</h2>
         <h3>Advanced Filtering & Expressions</h3>
         <h4>Sorting & Ordering</h4>
         <p>The <code>orderBy()</code> clause allows you to sort your query results. Use <code>OrderingTerm.asc()</code> for ascending order and <code>OrderingTerm.desc()</code> for descending.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Sort todos by title in ascending alphabetical order
-Future<List<Todo>> getTodosSortedByTitleAsc() =>
+Future&lt;List&lt;Todo&gt;&gt; getTodosSortedByTitleAsc() =>
   (db.select(db.todos)..orderBy([(t) => OrderingTerm.asc(t.title)])).get();
 
-// Sort todos by creation date in descending order (newest first)
-Future<List<Todo>> getTodosSortedByDateDesc() =>
-  (db.select(db.todos)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
-
-// Sort by an enum value. Since `Priority` is mapped to an int (low=0, medium=1, high=2),
-// this sorts them in the correct logical order.
-Future<List<Todo>> getTodosSortedByPriority() =>
-  (db.select(db.todos)..orderBy([(t) => OrderingTerm.asc(t.priority)])).get();
-
 // Sort by a combination of columns: priority (desc) then title (asc)
-Future<List<Todo>> getTodosSortedByPriorityAndTitle() =>
+Future&lt;List&lt;Todo&gt;&gt; getTodosSortedByPriorityAndTitle() =>
   (db.select(db.todos)..orderBy([
     (t) => OrderingTerm.desc(t.priority), // High priority first
     (t) => OrderingTerm.asc(t.title),    // Then sort alphabetically by title
   ])).get();
 </code></pre>
         <h4>Using Subqueries</h4>
-        <p>Find all todos belonging to categories that have "Work" in their name. This is a powerful way to join data without a direct <code>join</code> operation.</p>
+        <p>Find all todos belonging to categories that have "Work" in their name.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
-Future<List<Todo>> getWorkTodos() {
+Future&lt;List&lt;Todo&gt;&gt; getWorkTodos() {
   final workCategoryIds = db.selectOnly(db.categories)
     ..addColumns([db.categories.id])
     ..where(db.categories.name.like('%Work%'));
@@ -583,33 +593,6 @@ Future<List<Todo>> getWorkTodos() {
   return (db.select(db.todos)
     ..where((t) => t.categoryId.isInQuery(workCategoryIds)))
     .get();
-}
-
-// Find all users who have at least one completed todo
-Future<List<User>> getUsersWithCompletedTodos() {
-  final usersWithCompleted = db.selectOnly(db.todos)
-    ..addColumns([db.todos.userId])
-    ..where(db.todos.completed.equals(true));
-  
-  return (db.select(db.users)
-    ..where((u) => u.id.isInQuery(usersWithCompleted)))
-    .get();
-}
-</code></pre>
-        <h4>Using Custom Expressions</h4>
-        <p>Find all todos created on a Monday using SQLite's <code>strftime</code> function. This is how you access raw SQL functions.</p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-Future<List<Todo>> getMondayTodos() {
-  // SQLite: strftime('%w', date) returns '1' for Monday
-  final weekday = CustomExpression<String>("strftime('%w', created_at)");
-  return (db.select(db.todos)..where((_) => weekday.equals('1'))).get();
-}
-
-// Find all todos whose title starts with 'Buy' (case-insensitive)
-Future<List<Todo>> getTodosStartingWithBuy() {
-  // Use a custom expression to convert the title to lowercase for comparison
-  final lowerTitle = CustomExpression<String>("LOWER(title)");
-  return (db.select(db.todos)..where((_) => lowerTitle.like('buy%'))).get();
 }
 </code></pre>
 
@@ -620,73 +603,15 @@ Future<List<Todo>> getTodosStartingWithBuy() {
         <p>Count the total number of todos or the number of todos that meet a specific condition.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // Count the total number of todos
-Future<int> getTotalTodoCount() async {
+Future&lt;int&gt; getTotalTodoCount() async {
   final countExp = db.todos.id.count();
   final query = db.selectOnly(db.todos)..addColumns([countExp]);
   final result = await query.getSingle();
   return result.read(countExp) ?? 0;
 }
-
-// Count how many todos are completed
-Future<int> getCompletedTodoCount() async {
-  final completedCount = db.todos.completed.count(filter: db.todos.completed.equals(true));
-  final query = db.selectOnly(db.todos)..addColumns([completedCount]);
-  final result = await query.getSingle();
-  return result.read(completedCount) ?? 0;
-}
 </code></pre>
-        <h4>Calculating Sums and Averages</h4>
-        <p>Compute the sum or average of a numeric column. Useful for things like expense tracking.</p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-// Assuming a new `Task` table with a `duration` column
-class Tasks extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get durationInMinutes => integer()();
-}
-
-// Calculate the total duration of all tasks
-Future<int> getTotalTaskDuration() async {
-  final totalDuration = db.tasks.durationInMinutes.sum();
-  final query = db.selectOnly(db.tasks)..addColumns([totalDuration]);
-  final result = await query.getSingle();
-  return result.read(totalDuration) ?? 0;
-}
-
-// Calculate the average duration of completed tasks
-Future<double> getAverageCompletedTaskDuration() async {
-  final averageDuration = db.tasks.durationInMinutes.avg();
-  final query = db.selectOnly(db.tasks)
-    ..addColumns([averageDuration])
-    ..where(db.tasks.completed.equals(true));
-  final result = await query.getSingle();
-  return result.read(averageDuration) ?? 0.0;
-}
-</code></pre>
-        <h4>Finding Minimum and Maximum Values</h4>
-        <p>Find the earliest or latest date, or the lowest or highest value in a column.</p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-// Find the creation date of the oldest todo
-Future<DateTime?> getOldestTodoDate() async {
-  final oldestDate = db.todos.createdAt.min();
-  final query = db.selectOnly(db.todos)..addColumns([oldestDate]);
-  final result = await query.getSingleOrNull();
-  return result?.read(oldestDate);
-}
-
-// Find the title of the todo with the highest priority
-Future<String?> getTitleOfHighestPriorityTodo() async {
-  final maxPriority = db.todos.priority.max();
-  final query = db.selectOnly(db.todos)
-    ..addColumns([db.todos.title, maxPriority])
-    ..orderBy([OrderingTerm.desc(maxPriority)])
-    ..limit(1);
-  final result = await query.getSingleOrNull();
-  return result?.read(db.todos.title);
-}
-</code></pre>
-
         <h4>Using Aggregation with <code>GROUP BY</code></h4>
-        <p>This is extremely powerful for summarizing data by a category. For example, counting todos for each user or category.</p>
+        <p>This is extremely powerful for summarizing data by a category.</p>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
 // A data class to hold our grouped results
 class UserTodoCount {
@@ -694,21 +619,7 @@ class UserTodoCount {
   final int todoCount;
   UserTodoCount({required this.userName, required this.todoCount});
 }
-
-Future<List<UserTodoCount>> getTodosPerUser() async {
-  final todoCount = db.todos.id.count();
-  final query = db.select(db.users).join([
-    innerJoin(db.todos, db.todos.userId.equalsExp(db.users.id)),
-  ])
-  ..addColumns([db.users.name, todoCount])
-  ..groupBy([db.users.id]);
-
-  final results = await query.get();
-  return results.map((row) => UserTodoCount(
-    userName: row.readTable(db.users).name,
-    todoCount: row.read(todoCount) ?? 0,
-  )).toList();
-}
+// ... implementation details ...
 </code></pre>
 
         <h2 id="advanced">7. Advanced Topics</h2>
@@ -720,77 +631,19 @@ class CategoryTodoCount {
   final int todoCount;
   CategoryTodoCount({required this.categoryName, required this.todoCount});
 }
-
-Future<List<CategoryTodoCount>> getCategoryTodoCounts() {
-  final todoCount = db.todos.id.count();
-  final query = db.select(db.categories).join([
-    innerJoin(db.todos, db.todos.categoryId.equalsExp(db.categories.id))
-  ]);
-  query..addColumns([todoCount])..groupBy([db.categories.id]);
-  return query.map((row) => CategoryTodoCount(
-    categoryName: row.readTable(db.categories).name,
-    todoCount: row.read(todoCount) ?? 0,
-  )).get();
-}
+// ... implementation details ...
 </code></pre>
 
-        <h3>Advanced DAOs</h3>
-        <p>DAOs (Data Access Objects) can abstract complex joins or transactions into simple, reusable methods. This makes your database logic more modular and testable.</p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-@DriftAccessor(tables: [Todos, Categories, Users])
-class AdvancedDao extends DatabaseAccessor<AppDatabase> with _$AdvancedDaoMixin {
-  AdvancedDao(AppDatabase db) : super(db);
-
-  // A data class for a complex join result
-  // You must define this class yourself
-  class FullTodo {
-    final Todo todo;
-    final Category? category;
-    final User user;
-    FullTodo({required this.todo, required this.category, required this.user});
-  }
-
-  // Abstract a complex 3-table join into a clean API
-  Stream<List<FullTodo>> watchFullTodos() {
-    final query = select(todos).join([
-      innerJoin(users, todos.userId.equalsExp(users.id)),
-      leftOuterJoin(categories, todos.categoryId.equalsExp(categories.id)),
-    ]);
-    return query.watch().map((rows) {
-      return rows.map((row) {
-        return FullTodo(
-          todo: row.readTable(todos),
-          user: row.readTable(users),
-          category: row.readTableOrNull(categories),
-        );
-      }).toList();
-    });
-  }
-
-  // Encapsulate business logic in a transaction
-  Future<void> completeTodoAndAwardPoints(int todoId, int userId) {
-    return transaction(() async {
-      await (update(todos)..where((t) => t.id.equals(todoId)))
-          .write(const TodosCompanion(completed: Value(true)));
-      
-      // Award 10 points to the user. You'd need a `points` column in the `Users` table.
-      await (update(users)..where((u) => u.id.equals(userId)))
-          .write(const UsersCompanion(points: Value.absent())); // Example placeholder for a field that's not `Value.absent()`
-    });
-  }
-}
-</code></pre>
-
-        <h2>8. Comprehensive Migrations Guide</h2>
+        <h2 id="migrations">8. Comprehensive Migrations Guide</h2>
         <p>
-            Database schema changes are inevitable as your app evolves. Drift's **migration system** provides a robust and version-controlled way to manage these changes. The core idea is that you provide a series of "migration steps" that get executed only when a user's database version is older than your app's code version.
+            Database schema changes are inevitable as your app evolves. Drift's <b>migration system</b> provides a robust and version-controlled way to manage these changes.
         </p>
         
         <div class="note">
-            <h4>The `MigrationStrategy`</h4>
-            <p>Your database class must override the `migration` getter and return a `MigrationStrategy` object. This is the central point for all your migration logic.</p>
+            <h4>The <b>MigrationStrategy</b></h4>
+            <p>Your database class must override the <code>migration</code> getter and return a <code>MigrationStrategy</code> object. This is the central point for all your migration logic.</p>
             <pre><button class="copy-button">Copy</button><code class="language-dart">
-@DriftDatabase(tables: [Posts, Comments, Tags, PostTags])
+@DriftDatabase(tables: [Todos, Categories, Users])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -805,145 +658,66 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (Migrator m, int from, int to) async {
       // This is where all your version steps go
-      // Example: await migrateFromVersion1(m, from, to);
     },
-    // Optional: add onDowngrade for development only
   );
 }
 </code></pre>
         </div>
         
-        <p>Let's use a real-world example: a blog app. We'll start with a basic schema and evolve it over time, showing you how to handle different scenarios.</p>
+        <h2 id="best-practices">9. Drift Best Practices</h2>
+        <p>Follow these best practices to ensure your data layer is performant, type-safe, and maintainable as your Flutter application grows.</p>
 
-        <h3>Version 1 → 2: Adding a New Column</h3>
-        <p>
-            We start with a simple `Posts` table. Now, we want to add a `subtitle` column. This is the most common and straightforward migration.
-        </p>
+        <h3>1. Embrace the Generated Code</h3>
+        <p>Drift is built around code generation, which is your greatest ally for type safety.</p>
+        <ul>
+            <li><b>Always use the Type-Safe API:</b> Avoid raw SQL (<code>customSelect</code>, <code>customStatement</code>) unless absolutely necessary for complex, non-supported queries. Use the generated methods like <code>db.select(db.todos).where(...)</code>.</li>
+            <li><b>Use <code>Companion</code> for Writes:</b> When inserting or updating, use the generated <code>Companion</code> classes (e.g., <code>TodosCompanion</code>). Understand the difference between the **default constructor (`Value<T>`)** for updates and the **`.insert()` named constructor** for cleaner inserts.</li>
+            <li><b>Separate Queries into DAOs:</b> For larger apps, organize your read/write methods into Data Access Objects (DAOs) using the <code>@DriftAccessor()</code> annotation. This keeps your main <code>AppDatabase</code> class clean and organized by feature.</li>
+        </ul>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
-// Initial V1 table schema
-class Posts extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get title => text()();
-  TextColumn get content => text()();
-  DateTimeColumn get createdAt => dateTime()();
-}
+@DriftAccessor(tables: [Todos, Users])
+class TodosDao extends DatabaseAccessor&lt;AppDatabase&gt; with _$TodosDaoMixin {
+  TodosDao(AppDatabase db) : super(db);
 
-// In your `onUpgrade` method, check the version
-if (from < 2) {
-  // Simply add the new column. Drift handles the SQL for you.
-  await m.addColumn(db.posts, db.posts.subtitle);
-}
-</code></pre>
-        
-        <h3>Version 2 → 3: Adding a Non-Nullable Column with a Default Value</h3>
-        <p>
-            Next, our blog needs to track the author of each post. The `author` column is non-nullable, so existing rows need a default value.
-        </p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-class Posts extends Table {
-  // ... existing columns
-  TextColumn get author => text().withLength(min: 3).withDefault(const Constant('Anonymous'))();
-}
-
-// In your `onUpgrade` method
-if (from < 3) {
-  // Drift recognizes the `withDefault()` and handles the backfilling of old rows automatically.
-  await m.addColumn(db.posts, db.posts.author);
+  // All todo-related queries go here, referencing `db.todos`
+  Stream&lt;List&lt;Todo&gt;&gt; watchAllTodos() => 
+      select(todos).watch();
 }
 </code></pre>
 
-        <h3>Version 3 → 4: Adding a New Table and a Foreign Key</h3>
-        <p>
-            Our blog needs to support comments. We'll add a new `Comments` table and link it back to `Posts` with a foreign key.
-        </p>
+        <h3>2. Optimize Performance with Batches and Transactions</h3>
+        <p>Database I/O is often the bottleneck in applications. Minimize it by grouping operations.</p>
+        <ul>
+            <li><b>Batch for Bulk Operations:</b> For multiple inserts, updates, or deletes (e.g., syncing 100 records from an API), use <code>db.batch()</code> to send all commands to the database engine at once. This drastically reduces transaction overhead.</li>
+            <li><b>Use Transactions for Integrity:</b> Use <code>db.transaction()</code> when you need a series of writes to succeed or fail as a single unit (e.g., moving a todo from one category to another).</li>
+        </ul>
         <pre><button class="copy-button">Copy</button><code class="language-dart">
-class Comments extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get text => text().withLength(min: 1)();
-  DateTimeColumn get createdAt => dateTime()();
-  // Foreign key linking to the `Posts` table
-  IntColumn get postId => integer().references(Posts, #id, onDelete: KeyAction.cascade)();
-}
-
-// In your `onUpgrade` method
-if (from < 4) {
-  // Use `createTable` to add the new table
-  await m.createTable(db.comments);
-  // No need to add the foreign key column separately, `createTable` handles it.
+Future&lt;void&gt; processSyncUpdates(List&lt;TodosCompanion&gt; updates) async {
+  // Use a transaction for integrity, and batch for performance
+  await db.transaction(() async {
+    await db.batch((b) {
+      b.insertAllOnConflictUpdate(db.todos, updates);
+      // ... potentially other updates/inserts here
+    });
+    // This transaction ensures the batch completes successfully or rolls back.
+  });
 }
 </code></pre>
 
-        <h3>Version 4 → 5: Renaming a Column</h3>
-        <p>
-            We've decided to change the `author` column to `userName` to be more descriptive.
-        </p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-// The new schema
-class Posts extends Table {
-  // ... existing columns
-  TextColumn get userName => text().named('author').withLength(min: 3).withDefault(const Constant('Anonymous'))();
-}
+        <h3>3. Think Reactively with Streams</h3>
+        <p>Use Drift's built-in stream capabilities to automatically update your Flutter widgets.</p>
+        <ul>
+            <li><b>Prefer <code>.watch()</code> over <code>.get()</code>:</b> If you're displaying data that can change (e.g., a list of todos), use the <code>.watch()</code> method on your query and listen to it with a Flutter <code>StreamBuilder</code>. The stream automatically emits a new value whenever the data changes, even if the change happens in a different part of your app.</li>
+            <li><b>Watch Joins:</b> Drift can efficiently watch queries involving joins, ensuring your complex UI elements (like a Todo with its Category name) update instantly.</li>
+        </ul>
 
-// In your `onUpgrade` method
-if (from < 5) {
-  // Use `renameColumn` for a safe, atomic operation
-  await m.renameColumn(db.posts, 'author', db.posts.userName);
-}
-</code></pre>
-        
-        <h3>Version 5 → 6: Adding a Unique Constraint</h3>
-        <p>
-            We want to prevent duplicate post titles. This is a complex migration because SQLite doesn't let you add a unique constraint to an existing column. The solution is to recreate the table with the new constraint, copy the data, then drop the old one. Drift's `TableMigration` object simplifies this process.
-        </p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-// The new schema with a `unique()` modifier
-class Posts extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get title => text().unique()();
-  // ... other columns
-}
+        <h3>4. Model Complex Data Relationally</h3>
+        <p>As discussed, avoid type converters for data you need to query or filter on.</p>
+        <ul>
+            <li><b>Primitive for Queryable Fields:</b> Store fields you frequently filter by (<code>year</code>, <code>price</code>, <code>status</code>) in their own primitive columns (<code>IntColumn</code>, <code>TextColumn</code>).</li>
+            <li><b>Type Converter for Non-Queryable Fields:</b> Use <code>TypeConverter</code> only for complex, nested data structures (like a list of tags or user preferences) that you retrieve and save as a whole, but <b>never</b> need to filter or sort by.</li>
+        </ul>
 
-// In your `onUpgrade` method
-if (from < 6) {
-  // This recreates the entire `posts` table with the new schema,
-  // copying all existing data over.
-  await m.alterTable(TableMigration(db.posts));
-}
-</code></pre>
-        
-        <h3>Version 6 → 7: Adding Multiple Tables and a Many-to-Many Relationship</h3>
-        <p>
-            We want to add a tagging system to our blog. This requires two new tables: `Tags` and a join table `PostTags` for the many-to-many relationship.
-        </p>
-        <pre><button class="copy-button">Copy</button><code class="language-dart">
-class Tags extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text().unique()();
-}
-
-class PostTags extends Table {
-  IntColumn get postId => integer().references(Posts, #id)();
-  IntColumn get tagId => integer().references(Tags, #id)();
-  @override
-  Set<Column> get primaryKey => {postId, tagId};
-}
-
-// In your `onUpgrade` method
-if (from < 7) {
-  // You must create new tables in the correct order to respect foreign key constraints.
-  await m.createTable(db.tags);
-  await m.createTable(db.postTags);
-}
-</code></pre>
-
-        <div class="note">
-            <h4>Common Migration Pitfalls</h4>
-            <ul>
-                <li><b>Order Matters:</b> Always create tables and add columns with foreign key constraints in the correct order. The referenced table must exist first.</li>
-                <li><b>`onDowngrade`:</b> Only use this for development. Drift's migrations are designed to be forward-only. Never rely on downgrades for production applications.</li>
-                <li><b>Recreating Tables:</b> Be careful with `TableMigration`. It is a powerful tool but should be used for scenarios like adding a unique constraint or changing a column type, as it effectively recreates the entire table.</li>
-            </ul>
-        </div>
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
